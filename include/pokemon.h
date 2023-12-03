@@ -333,6 +333,7 @@ struct SpeciesInfo /*0x24*/
  /* 0x1F */ u8 bodyColor : 7;
             u8 noFlip : 1;
  /* 0x20 */ u16 flags;
+ /* 0x21 */ u16 abilityHidden;
 };
 
 struct BattleMove
