@@ -4091,6 +4091,18 @@ static void Cmd_getexp(void)
                 if (holdEffect == HOLD_EFFECT_EXP_SHARE || IsGen6ExpShareEnabled())
                 {
                     expShareBits |= gBitTable[i];
+                item = GetMonData(&gPlayerParty[i], MON_DATA_HELD_ITEM);
+
+                if (item == ITEM_ENIGMA_BERRY)
+                    #ifndef FREE_ENIGMA_BERRY
+                    holdEffect = gSaveBlock1Ptr->enigmaBerry.holdEffect;
+                    #else
+                    holdEffect = 0;
+                    #endif
+                else
+                    holdEffect = ItemId_GetHoldEffect(item);
+
+                if (holdEffect == HOLD_EFFECT_EXP_SHARE)
                     viaExpShare++;
                 }
             }
@@ -4153,6 +4165,16 @@ static void Cmd_getexp(void)
         {
             bool32 wasSentOut = ((gBattleStruct->expSentInMons & gBitTable[*expMonId]) != 0);
             holdEffect = GetMonHoldEffect(&gPlayerParty[*expMonId]);
+            item = GetMonData(&gPlayerParty[gBattleStruct->expGetterMonId], MON_DATA_HELD_ITEM);
+
+            if (item == ITEM_ENIGMA_BERRY)
+                #ifndef FREE_ENIGMA_BERRY
+                holdEffect = gSaveBlock1Ptr->enigmaBerry.holdEffect;
+                #else
+                holdEffect = 0;
+                #endif
+            else
+                holdEffect = ItemId_GetHoldEffect(item);
 
             if ((holdEffect != HOLD_EFFECT_EXP_SHARE && !wasSentOut && !IsGen6ExpShareEnabled())
              || GetMonData(&gPlayerParty[*expMonId], MON_DATA_SPECIES_OR_EGG) == SPECIES_EGG)

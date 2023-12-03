@@ -4311,7 +4311,14 @@ static bool8 IsHPRecoveryItem(u16 item)
 
     if (effect == NULL)
         return FALSE;
-
+    if (item == ITEM_ENIGMA_BERRY)
+        #ifndef FREE_ENIGMA_BERRY
+        effect = gSaveBlock1Ptr->enigmaBerry.itemEffect;
+        #else
+        effect = 0;
+        #endif
+    else
+        effect = gItemEffectTable[item - ITEM_POTION];
     if (effect[4] & ITEM4_HEAL_HP)
         return TRUE;
     else
@@ -4900,6 +4907,16 @@ void ItemUseCB_PPRecovery(u8 taskId, TaskFunc task)
     const u8 *effect = GetItemEffect(gSpecialVar_ItemId);
 
     if (effect == NULL || !(effect[4] & ITEM4_HEAL_PP_ONE))
+    if (item == ITEM_ENIGMA_BERRY)
+        #ifndef FREE_ENIGMA_BERRY
+        effect = gSaveBlock1Ptr->enigmaBerry.itemEffect;
+        #else
+        effect = 0;
+        #endif
+    else
+        effect = gItemEffectTable[item - ITEM_POTION];
+
+    if (!(effect[4] & ITEM4_HEAL_PP_ONE))
     {
         gPartyMenu.data1 = 0;
         TryUseItemOnMove(taskId);
@@ -5796,6 +5813,17 @@ u8 GetItemEffectType(u16 item)
         return ITEM_EFFECT_NONE;
 
     if ((itemEffect[0] & ITEM0_DIRE_HIT) || itemEffect[1] || (itemEffect[3] & ITEM3_GUARD_SPEC))
+    // Read the item's effect properties.
+    if (item == ITEM_ENIGMA_BERRY)
+        #ifndef FREE_ENIGMA_BERRY
+        itemEffect = gSaveBlock1Ptr->enigmaBerry.itemEffect;
+        #else
+        itemEffect = 0;
+        #endif
+    else
+        itemEffect = gItemEffectTable[item - ITEM_POTION];
+
+    if ((itemEffect[0] & (ITEM0_DIRE_HIT | ITEM0_X_ATTACK)) || itemEffect[1] || itemEffect[2] || (itemEffect[3] & ITEM3_GUARD_SPEC))
         return ITEM_EFFECT_X_ITEM;
     else if (itemEffect[0] & ITEM0_SACRED_ASH)
         return ITEM_EFFECT_SACRED_ASH;
