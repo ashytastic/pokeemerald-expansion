@@ -1,10 +1,13 @@
-#include "global.h"
+#include <string.h>
 #include "gba/m4a_internal.h"
 #include "global.h"
 
 extern const u8 gCgb3Vol[];
 
 #define BSS_CODE __attribute__((section(".bss.code")))
+
+BSS_CODE ALIGNED(4) char SoundMainRAM_Buffer[0xB40] = {0}; // Mixer HQ Check
+BSS_CODE ALIGNED(4) u32 hq_buffer_ptr[0xE0] = {0}; // Mixer HQ Check
 
 COMMON_DATA struct SoundInfo gSoundInfo = {0};
 COMMON_DATA struct PokemonCrySong gPokemonCrySongs[MAX_POKEMON_CRIES] = {0};
@@ -70,12 +73,14 @@ void m4aSoundInit(void)
 {
     s32 i;
 
+    CpuCopy32((void *)((s32)SoundMainRAM & ~1), SoundMainRAM_Buffer, sizeof(SoundMainRAM_Buffer));
+
     SoundInit(&gSoundInfo);
     MPlayExtender(gCgbChans);
     m4aSoundMode(SOUND_MODE_DA_BIT_8
                | SOUND_MODE_FREQ_13379
                | (12 << SOUND_MODE_MASVOL_SHIFT)
-               | (5 << SOUND_MODE_MAXCHN_SHIFT));
+               | (12 << SOUND_MODE_MAXCHN_SHIFT));
 
     for (i = 0; i < NUM_MUSIC_PLAYERS; i++)
     {
@@ -280,7 +285,6 @@ void MPlayExtender(struct CgbChannel *cgbChans)
 
     soundInfo->ident++;
 
-#if __STDC_VERSION__ < 202311L
     gMPlayJumpTable[8] = ply_memacc;
     gMPlayJumpTable[17] = ply_lfos;
     gMPlayJumpTable[19] = ply_mod;
@@ -290,17 +294,6 @@ void MPlayExtender(struct CgbChannel *cgbChans)
     gMPlayJumpTable[31] = TrackStop;
     gMPlayJumpTable[32] = FadeOutBody;
     gMPlayJumpTable[33] = TrkVolPitSet;
-#else
-    gMPlayJumpTable[8] = (void (*)(...))ply_memacc;
-    gMPlayJumpTable[17] = (void (*)(...))ply_lfos;
-    gMPlayJumpTable[19] = (void (*)(...))ply_mod;
-    gMPlayJumpTable[28] = (void (*)(...))ply_xcmd;
-    gMPlayJumpTable[29] = (void (*)(...))ply_endtie;
-    gMPlayJumpTable[30] = (void (*)(...))SampleFreqSet;
-    gMPlayJumpTable[31] = (void (*)(...))TrackStop;
-    gMPlayJumpTable[32] = (void (*)(...))FadeOutBody;
-    gMPlayJumpTable[33] = (void (*)(...))TrkVolPitSet;
-#endif
 
     soundInfo->cgbChans = cgbChans;
     soundInfo->CgbSound = CgbSound;
@@ -329,21 +322,13 @@ void MusicPlayerJumpTableCopy(void)
 
 void ClearChain(void *x)
 {
-#if __STDC_VERSION__ < 202311L
     void (*func)(void *) = *(&gMPlayJumpTable[34]);
-#else
-    void (*func)(...) = *(&gMPlayJumpTable[34]);
-#endif
     func(x);
 }
 
 void Clear64byte(void *x)
 {
-#if __STDC_VERSION__ < 202311L
     void (*func)(void *) = *(&gMPlayJumpTable[35]);
-#else
-    void (*func)(...) = *(&gMPlayJumpTable[35]);
-#endif
     func(x);
 }
 
